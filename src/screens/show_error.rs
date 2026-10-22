@@ -12,17 +12,23 @@ use tui_scrollview::{ScrollView, ScrollViewState};
 use crate::{InputResult, Screen, state::AppState};
 
 pub mod state;
-pub use state::ShowErrorScreenState;
+use state::ErrorType;
+pub use state::ShowErrorState;
 
-struct ScrollableErrorWidget {
-    error_list: Vec<String>,
+struct ScrollableErrorWidget<'a> {
+    errors: &'a [ErrorType],
 }
 
-impl StatefulWidget for ScrollableErrorWidget {
+impl<'a> StatefulWidget for ScrollableErrorWidget<'a> {
     type State = ScrollViewState;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let content = self.error_list.join("\n");
+        let content = self
+            .errors
+            .iter()
+            .map(|err| err.to_string())
+            .collect::<Vec<String>>()
+            .join("\n");
 
         let content_paragraph = Paragraph::new(content).wrap(Wrap { trim: true });
         let content_size = Size::new(
@@ -86,9 +92,9 @@ impl ShowError {
         let inner_area = error_block.inner(error_area);
         frame.render_widget(error_block, error_area);
 
-        let widget = ScrollableErrorWidget {
-            error_list: state.error_screen_state.get_currently_shown_errors(),
-        };
-        frame.render_stateful_widget(widget, inner_area, state.error_screen_state.view_state());
+        let (error_list, view_state) = state.error_screen_state.get_error_scroll_resources();
+
+        let widget = ScrollableErrorWidget { errors: error_list };
+        frame.render_stateful_widget(widget, inner_area, view_state);
     }
 }

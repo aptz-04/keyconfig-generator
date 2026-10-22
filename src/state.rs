@@ -6,7 +6,7 @@ use crate::{
     error::CliArgumentError,
     screens::{
         editor::{EditorMode, EditorState},
-        show_error::ShowErrorScreenState,
+        show_error::ShowErrorState,
         start::{Start, StartState},
     },
 };
@@ -17,17 +17,17 @@ pub struct AppState {
     pub start: StartState,
     pub file_explorer: FileExplorer,
     pub initial_config_file: Option<PathBuf>,
-    pub error_screen_state: ShowErrorScreenState,
+    pub error_screen_state: ShowErrorState,
 }
 
 impl AppState {
     pub fn new(args: Cli) -> Self {
-        let mut error_state = ShowErrorScreenState::new();
+        let mut error_state = ShowErrorState::new();
 
         let working_directory = match check_working_directory_argument(args.working_directory) {
             Ok(path) => path,
             Err(error) => {
-                error_state.add_error(error.to_string());
+                error_state.add_error(error.into());
                 PathBuf::from(".")
             }
         };
@@ -35,7 +35,7 @@ impl AppState {
         let initial_config = match check_config_file_argument(args.config_file) {
             Ok(path) => path,
             Err(error) => {
-                error_state.add_error(error.to_string());
+                error_state.add_error(error.into());
                 None
             }
         };

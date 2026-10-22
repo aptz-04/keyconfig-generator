@@ -2,20 +2,22 @@ use std::ops::RangeFrom;
 
 use tui_scrollview::ScrollViewState;
 
-pub struct ShowErrorScreenState {
+pub type ErrorType = anyhow::Error;
+
+pub struct ShowErrorState {
     scroll_view_state: ScrollViewState,
-    errors: Vec<String>,
+    errors: Vec<ErrorType>,
     new_errors: RangeFrom<usize>,
-    currently_shown_errors: Vec<String>,
+    currently_shown_errors: RangeFrom<usize>,
 }
 
-impl ShowErrorScreenState {
+impl ShowErrorState {
     pub fn new() -> Self {
-        ShowErrorScreenState {
+        ShowErrorState {
             scroll_view_state: ScrollViewState::new(),
-            errors: Vec::<String>::new(),
+            errors: Vec::<ErrorType>::new(),
             new_errors: RangeFrom { start: 0 },
-            currently_shown_errors: Vec::<String>::new(),
+            currently_shown_errors: RangeFrom { start: 0 },
         }
     }
 
@@ -27,23 +29,21 @@ impl ShowErrorScreenState {
         self.errors.len() > self.new_errors.start
     }
 
-    pub fn add_error(&mut self, error: String) {
+    pub fn add_error(&mut self, error: ErrorType) {
         self.errors.push(error);
     }
 
     /// sets the currently shown errors to the range of unseen values
     pub fn set_currently_shown_errors(&mut self) {
-        let unseen_range = &self.errors[self.new_errors.clone()];
+        self.currently_shown_errors = self.new_errors.clone();
         self.new_errors = self.errors.len()..;
-
-        self.currently_shown_errors = unseen_range.into()
     }
 
-    pub fn get_currently_shown_errors(&mut self) -> Vec<String> {
-        self.currently_shown_errors.clone()
-    }
-
-    pub fn view_state(&mut self) -> &mut ScrollViewState {
-        &mut self.scroll_view_state
+    /// get resources for rendering of the central scrollable widget
+    pub fn get_error_scroll_resources(&mut self) -> (&[ErrorType], &mut ScrollViewState) {
+        (
+            &self.errors[self.currently_shown_errors.clone()],
+            &mut self.scroll_view_state,
+        )
     }
 }

@@ -63,7 +63,7 @@ impl App {
             Some(file) => match Editor::try_from_file(&mut self.state, file) {
                 Ok(editor) => editor,
                 Err(err) => {
-                    self.state.error_screen_state.add_error(format!("{err}"));
+                    self.state.error_screen_state.add_error(err.into());
                     Start::new()
                 }
             },

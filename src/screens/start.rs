@@ -107,7 +107,7 @@ impl Start {
             if (key.code == KeyCode::Enter) && state.file_explorer.current().is_file() {
                 match Editor::try_from_currently_chosen_file(state) {
                     Ok(screen) => return GoToScreen(screen),
-                    Err(error) => state.error_screen_state.add_error(format!("{error}")),
+                    Err(error) => state.error_screen_state.add_error(error.into()),
                 }
             }
         }
