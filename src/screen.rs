@@ -5,10 +5,6 @@ use crate::input_results::InputResult;
 use crate::state::AppState;
 
 pub trait Screen {
-    /// construct a new screen, passing the global application state.
-    fn new() -> Box<Self>
-    where
-        Self: Sized;
     /// (re)-draw the screen on the given Terminal
     fn draw(&self, state: &mut AppState, terminal: &mut DefaultTerminal);
     /// handle an input event

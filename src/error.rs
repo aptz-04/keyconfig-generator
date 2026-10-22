@@ -3,3 +3,7 @@ pub enum MatrixError {
     UnknownMatrixName,
     DuplicateMatrixName,
 }
+
+pub enum ConfigParserError {
+    InvalidInputFileFormat,
+}

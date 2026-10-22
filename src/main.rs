@@ -1,3 +1,4 @@
+use clap::Parser;
 use crossterm::{
     event::{
         DisableMouseCapture, EnableMouseCapture, Event, EventStream, KeyCode, KeyEvent,
@@ -12,12 +13,12 @@ use ratatui::{
     text::Line,
     widgets::{Block, Paragraph},
 };
-
-mod screens;
+use std::path::{Path, PathBuf};
 
 mod error;
 mod input_results;
 mod screen;
+mod screens;
 mod state;
 
 use crate::{
@@ -28,11 +29,25 @@ use crate::{
     state::AppState,
 };
 
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Cli {
+    /// Directory to operate on (defaults to the current directory)
+    #[arg(short, long, default_value = ".")]
+    path: PathBuf,
+}
+
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
+    let cli = Cli::parse();
+    let working_directory = cli
+        .path
+        .canonicalize()
+        .expect(format!("Working directory \"{:?}\" could not be found", cli.path).as_str());
+
     color_eyre::install()?;
     let terminal = ratatui::init();
-    let result = App::new().run(terminal).await;
+    let result = App::new(working_directory).run(terminal).await;
     ratatui::restore();
     result
 }
@@ -45,11 +60,11 @@ pub struct App {
 
 impl App {
     /// Construct a new instance of [`App`].
-    pub fn new() -> Self {
+    pub fn new(working_directory: PathBuf) -> Self {
         // setup screens, editor is the first one displayed
         App {
             event_stream: EventStream::default(),
-            state: AppState::new(),
+            state: AppState::new(working_directory),
         }
     }
 

@@ -1,21 +1,20 @@
+use std::path::PathBuf;
+
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
     DefaultTerminal, Frame,
     layout::{Constraint, Layout},
     style::Modifier,
-    widgets::List,
+    widgets::{FrameExt, List},
 };
-use ratatui_explorer::{FileExplorerBuilder, Theme};
+use ratatui_explorer::{FileExplorer, FileExplorerBuilder, Theme};
 
 use crate::{
-    App,
-    input_results::InputResult::{self, GoToScreen, NoAction},
+    input_results::InputResult::{self, GoToScreen, NoAction, QuitApplication},
     screen::Screen,
-    screens::editor::Editor,
+    screens::{common_handling::is_escape_etc, editor::Editor},
     state::AppState,
 };
-
-use super::common_handling::common_event_handling;
 
 mod mode;
 mod state;
@@ -26,13 +25,6 @@ pub use state::StartState;
 pub struct Start {}
 
 impl Screen for Start {
-    fn new() -> Box<Self>
-    where
-        Self: Sized,
-    {
-        Box::new(Start {})
-    }
-
     fn draw(&self, state: &mut AppState, terminal: &mut DefaultTerminal) {
         let _ = terminal.draw(|frame| match state.start.current_mode() {
             StartMode::OptionSelection => self.draw_list_selection(state, frame),
@@ -45,21 +37,20 @@ impl Screen for Start {
         state: &mut AppState,
         event: Event,
     ) -> crate::input_results::InputResult {
-        // state/screen agnostic handling of common input events.
-        match common_event_handling(&event) {
-            NoAction => (),
-            result => return result,
-        }
-
         // mode dependent handling
         match state.start.current_mode() {
             StartMode::OptionSelection => Self::handle_list_navigation(&event, state),
-            StartMode::FileSelection => todo!(),
+            StartMode::FileSelection => Self::handle_explorer_navigation(&event, state),
         }
     }
 }
 
 impl Start {
+    /// Construct new instance of the start screen.
+    pub fn new() -> Box<Self> {
+        Box::new(Start {})
+    }
+
     /// Draw the start screen according to current app state. The state needs to be mutable due to the stateful widget signature.
     fn draw_list_selection(&self, state: &mut AppState, frame: &mut Frame) {
         let layout = Layout::vertical([
@@ -69,7 +60,7 @@ impl Start {
         ])
         .margin(5);
 
-        let [top, center, bottom] = frame.area().layout(&layout);
+        let [_, center, _] = frame.area().layout(&layout);
 
         let options = ["New Configuration", "Load from file"];
         let list = List::new(options)
@@ -79,10 +70,16 @@ impl Start {
         frame.render_stateful_widget(list, center, state.start.get_list_state());
     }
 
-    fn draw_file_selection(&self, state: &mut AppState, frame: &mut Frame) {}
+    fn draw_file_selection(&self, state: &mut AppState, frame: &mut Frame) {
+        frame.render_widget_ref(state.file_explorer.widget(), frame.area());
+    }
 
     /// Handle eventual list navigation upon key input
     fn handle_list_navigation(event: &Event, state: &mut AppState) -> InputResult {
+        if is_escape_etc(event) {
+            return QuitApplication;
+        }
+
         let list_state = state.start.get_list_state();
         match event {
             Event::Key(key) => match key.code {
@@ -102,5 +99,39 @@ impl Start {
             _ => (),
         }
         NoAction
+    }
+
+    fn handle_explorer_navigation(event: &Event, state: &mut AppState) -> InputResult {
+        if is_escape_etc(event) {
+            state.start.set_current_mode(StartMode::OptionSelection);
+        }
+
+        if let Event::Key(key) = event {
+            // catch enter if file is chosen, otherwise pass to explorer to handle.
+            if (key.code == KeyCode::Enter) && state.file_explorer.current().is_file() {
+                if let Ok(screen) = Editor::try_from_file(state) {
+                    return GoToScreen(screen);
+                } else {
+                    todo!("Display parser error and do nothing");
+                }
+            }
+        }
+
+        let _ = state.file_explorer.handle(event);
+        NoAction
+    }
+
+    pub fn new_file_explorer(initial_directory: &PathBuf) -> FileExplorer {
+        let theme = Theme::default().add_default_title();
+        let mut explorer = FileExplorerBuilder::build_with_theme(theme)
+            .expect("Building the file explorer failed!");
+        explorer.set_cwd(initial_directory).expect(
+            format!(
+                "Could not set file explorer to directory \"{:?}\"",
+                initial_directory
+            )
+            .as_str(),
+        );
+        explorer
     }
 }
