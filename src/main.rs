@@ -13,14 +13,19 @@ use ratatui::{
     widgets::{Block, Paragraph},
 };
 
-mod editor;
+mod screens;
+
 mod error;
 mod input_results;
 mod screen;
 mod state;
 
 use crate::{
-    editor::screen::EditorScreen, input_results::InputResult, screen::Screen, state::AppState,
+    input_results::InputResult,
+    screen::{Screen, ScreenStack},
+    screens::editor::Editor,
+    screens::start::Start,
+    state::AppState,
 };
 
 #[tokio::main]
@@ -37,30 +42,37 @@ pub struct App {
     is_running: bool,
     // Event stream.
     event_stream: EventStream,
-    current_screen: Box<dyn Screen>,
+    screen_stack: ScreenStack,
+    current_screen: Option<Box<dyn Screen>>,
+    state: AppState,
 }
 
 impl App {
     /// Construct a new instance of [`App`].
     pub fn new() -> Self {
+        // setup screens, editor is the first one displayed
         App {
             is_running: false,
             event_stream: EventStream::default(),
-            current_screen: EditorScreen::new(AppState::new()),
+            screen_stack: ScreenStack::new(),
+            current_screen: None,
+            state: AppState::new(),
         }
     }
 
     /// Run the application's main loop.
     pub async fn run(mut self, mut terminal: DefaultTerminal) -> color_eyre::Result<()> {
-        self.is_running = true;
-        while self.is_running {
-            self.current_screen.draw(&mut terminal);
+        let initial_screen = Start::new();
+        self.current_screen = Some(initial_screen);
 
+        while let Some(ref mut screen) = self.current_screen {
+            screen.draw(&self.state, &mut terminal);
             if let Some(event) = self.event_stream.next().await {
-                let result = self.current_screen.handle_crossterm_events(event.unwrap());
-                match result {
-                    InputResult::QuitApplication => {
-                        self.is_running = false;
+                match screen.handle_crossterm_events(&mut self.state, event.unwrap()) {
+                    InputResult::QuitApplication => break,
+                    InputResult::ReturnFromScreen => {
+                        // pop the next screen from stack, if there's None, quit the application
+                        self.current_screen = self.screen_stack.pop();
                     }
                     _ => (),
                 };

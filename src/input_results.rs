@@ -2,4 +2,5 @@
 pub enum InputResult {
     NoAction,
     QuitApplication,
+    ReturnFromScreen,
 }
