@@ -1,5 +1,3 @@
-use std::ops::RangeFrom;
-
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
     DefaultTerminal, Frame,
@@ -12,6 +10,9 @@ use ratatui::{
 use tui_scrollview::{ScrollView, ScrollViewState};
 
 use crate::{InputResult, Screen, state::AppState};
+
+pub mod state;
+pub use state::ShowErrorScreenState;
 
 struct ScrollableErrorWidget {
     error_list: Vec<String>,
@@ -39,53 +40,15 @@ impl StatefulWidget for ScrollableErrorWidget {
     }
 }
 
-pub struct ShowErrorScreen {}
+pub struct ShowError {}
 
-pub struct ShowErrorScreenState {
-    scroll_view_state: ScrollViewState,
-    errors: Vec<String>,
-    new_errors: RangeFrom<usize>,
-    currently_shown_errors: Vec<String>,
-}
-
-impl ShowErrorScreenState {
-    pub fn new() -> Self {
-        ShowErrorScreenState {
-            scroll_view_state: ScrollViewState::new(),
-            errors: Vec::<String>::new(),
-            new_errors: RangeFrom { start: 0 },
-            currently_shown_errors: Vec::<String>::new(),
-        }
-    }
-
-    pub fn has_unseen_errors(&self) -> bool {
-        self.errors.len() > self.new_errors.start
-    }
-
-    pub fn add_error(&mut self, error: String) {
-        self.errors.push(error);
-    }
-
-    /// sets the currently shown errors to the range of unseen values
-    pub fn set_currently_shown_errors(&mut self) {
-        let unseen_range = &self.errors[self.new_errors.clone()];
-        self.new_errors = self.errors.len()..;
-
-        self.currently_shown_errors = unseen_range.into()
-    }
-
-    pub fn view_state(&mut self) -> &mut ScrollViewState {
-        &mut self.scroll_view_state
-    }
-}
-
-impl Screen for ShowErrorScreen {
+impl Screen for ShowError {
     fn draw(&self, state: &mut AppState, terminal: &mut DefaultTerminal) {
         let _ = terminal.draw(|frame| self.draw_internal(state, frame));
     }
 
     fn handle_crossterm_events(&mut self, state: &mut AppState, event: Event) -> InputResult {
-        let scroll_state = &mut state.error_screen_state.scroll_view_state;
+        let scroll_state = state.error_screen_state.get_scrollview_state();
 
         match event {
             Event::Key(key) if key.is_press() => match key.code {
@@ -101,7 +64,7 @@ impl Screen for ShowErrorScreen {
     }
 }
 
-impl ShowErrorScreen {
+impl ShowError {
     pub fn new() -> Box<Self> {
         Box::new(Self {})
     }
@@ -124,7 +87,7 @@ impl ShowErrorScreen {
         frame.render_widget(error_block, error_area);
 
         let widget = ScrollableErrorWidget {
-            error_list: state.error_screen_state.currently_shown_errors.clone(),
+            error_list: state.error_screen_state.get_currently_shown_errors(),
         };
         frame.render_stateful_widget(widget, inner_area, state.error_screen_state.view_state());
     }

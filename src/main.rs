@@ -13,7 +13,7 @@ mod state;
 use crate::{
     input_results::InputResult,
     screen::{Screen, ScreenStack},
-    screens::{editor::Editor, show_error::ShowErrorScreen, start::Start},
+    screens::{editor::Editor, show_error::ShowError, start::Start},
     state::AppState,
 };
 
@@ -76,7 +76,7 @@ impl App {
             if self.state.error_screen_state.has_unseen_errors() {
                 self.state.error_screen_state.set_currently_shown_errors();
                 screen_stack.push(current_screen);
-                current_screen = ShowErrorScreen::new();
+                current_screen = ShowError::new();
             }
 
             current_screen.draw(&mut self.state, &mut terminal);
