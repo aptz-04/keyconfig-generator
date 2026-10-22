@@ -4,8 +4,8 @@ use crossterm::event::{Event, KeyCode};
 use ratatui::{
     DefaultTerminal, Frame,
     layout::{Constraint, Layout},
-    style::Modifier,
-    widgets::{FrameExt, List},
+    style::{Modifier, Stylize},
+    widgets::{FrameExt, List, Paragraph, Wrap},
 };
 use ratatui_explorer::{FileExplorer, FileExplorerBuilder, Theme};
 
@@ -32,11 +32,7 @@ impl Screen for Start {
         });
     }
 
-    fn handle_crossterm_events(
-        &mut self,
-        state: &mut AppState,
-        event: Event,
-    ) -> crate::input_results::InputResult {
+    fn handle_crossterm_events(&mut self, state: &mut AppState, event: Event) -> InputResult {
         // mode dependent handling
         match state.start.current_mode() {
             StartMode::OptionSelection => Self::handle_list_navigation(&event, state),
@@ -56,9 +52,9 @@ impl Start {
         let layout = Layout::vertical([
             Constraint::Length(5),
             Constraint::Fill(1),
-            Constraint::Length(1),
+            Constraint::Length(3),
         ])
-        .margin(5);
+        .margin(2);
 
         let [_, center, _] = frame.area().layout(&layout);
 
@@ -82,7 +78,7 @@ impl Start {
 
         let list_state = state.start.get_list_state();
         match event {
-            Event::Key(key) => match key.code {
+            Event::Key(key) if key.is_press() => match key.code {
                 KeyCode::Enter => {
                     if let Some(index) = list_state.selected() {
                         match index {
@@ -109,10 +105,9 @@ impl Start {
         if let Event::Key(key) = event {
             // catch enter if file is chosen, otherwise pass to explorer to handle.
             if (key.code == KeyCode::Enter) && state.file_explorer.current().is_file() {
-                if let Ok(screen) = Editor::try_from_file(state) {
-                    return GoToScreen(screen);
-                } else {
-                    todo!("Display parser error and do nothing");
+                match Editor::try_from_currently_chosen_file(state) {
+                    Ok(screen) => return GoToScreen(screen),
+                    Err(error) => state.error_screen_state.add_error(format!("{error}")),
                 }
             }
         }

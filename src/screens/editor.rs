@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use ratatui::{Frame, layout::Rect, style::Stylize, text::Line};
 
 use crate::{
@@ -46,14 +48,21 @@ impl Editor {
     }
 
     /// Tries to parse the currently chosen file in the file explorer and sets up the state and returns the new screen if successful. Returns an error if the input file could not be parsed.
-    pub fn try_from_file(state: &mut AppState) -> Result<Box<Self>, ConfigParserError> {
+    pub fn try_from_currently_chosen_file(
+        state: &mut AppState,
+    ) -> Result<Box<Self>, ConfigParserError> {
         let path = state.file_explorer.current().clone().path;
-        if let Ok(config) = Config::try_from_file(&path) {
-            state.editor.set_imported_config(&path, config);
-            Ok(Box::new(Editor {}))
-        } else {
-            Err(ConfigParserError::InvalidInputFileFormat)
-        }
+        Self::try_from_file(state, &path)
+    }
+
+    /// Tries to parse the file at the given path. Sets up the application state and returns the new screen if successful. Returns an error if the input file could not be parsed.
+    pub fn try_from_file(
+        state: &mut AppState,
+        file: &PathBuf,
+    ) -> Result<Box<Self>, ConfigParserError> {
+        let config = Config::try_from_file(&file)?;
+        state.editor.set_imported_config(&file, config);
+        Ok(Box::new(Editor {}))
     }
 
     fn draw_internal(&self, state: &AppState, frame: &mut Frame) {

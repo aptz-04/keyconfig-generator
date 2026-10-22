@@ -827,7 +827,9 @@ dependencies = [
  "futures",
  "ratatui",
  "ratatui-explorer",
+ "thiserror 2.0.21",
  "tokio",
+ "tui-scrollview",
  "tui-textarea-2",
 ]
 
@@ -1866,6 +1868,17 @@ dependencies = [
  "sharded-slab",
  "thread_local",
  "tracing-core",
+]
+
+[[package]]
+name = "tui-scrollview"
+version = "0.6.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "997f1ad8c98f3c1928bdf05a288d5ea5557b4261ea7c4c86fbf273f79b584da8"
+dependencies = [
+ "indoc",
+ "ratatui-core",
+ "ratatui-widgets",
 ]
 
 [[package]]
