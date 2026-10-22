@@ -4,8 +4,8 @@ use crossterm::event::{Event, KeyCode};
 use ratatui::{
     DefaultTerminal, Frame,
     layout::{Constraint, Layout},
-    style::{Modifier, Stylize},
-    widgets::{FrameExt, List, Paragraph, Wrap},
+    style::Modifier,
+    widgets::{FrameExt, List},
 };
 use ratatui_explorer::{FileExplorer, FileExplorerBuilder, Theme};
 

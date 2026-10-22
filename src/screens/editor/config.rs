@@ -7,7 +7,7 @@ pub struct Config {}
 
 impl Config {
     /// Construct a new, empty config.
-    pub fn new() -> Self {
+    pub fn _new() -> Self {
         Config {}
     }
 

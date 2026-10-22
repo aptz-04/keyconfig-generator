@@ -4,7 +4,7 @@ use super::EditorMode;
 use super::config::Config;
 
 pub struct EditorState {
-    current_mode: EditorMode,
+    _current_mode: EditorMode,
     current_file: Option<PathBuf>,
     config: Option<Config>,
 }
@@ -12,7 +12,7 @@ pub struct EditorState {
 impl EditorState {
     pub fn new(initial_mode: EditorMode) -> Self {
         EditorState {
-            current_mode: initial_mode,
+            _current_mode: initial_mode,
             current_file: None,
             config: None,
         }

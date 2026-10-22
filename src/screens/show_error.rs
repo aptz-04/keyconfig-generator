@@ -1,6 +1,5 @@
-use std::{collections::btree_map::Range, iter, ops::RangeFrom};
+use std::ops::RangeFrom;
 
-use clap::error;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
     DefaultTerminal, Frame,

@@ -1,12 +1,6 @@
 use std::path::PathBuf;
 use thiserror::Error;
 
-pub enum MatrixError {
-    InvalidMatrixIndex,
-    UnknownMatrixName,
-    DuplicateMatrixName,
-}
-
 #[derive(Debug, Error)]
 pub enum ConfigParserError {
     #[error("File \"{0}\" could not be parsed")]

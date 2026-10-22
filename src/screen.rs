@@ -32,6 +32,6 @@ impl ScreenStack {
     }
 }
 
-pub fn debug_draw(frame: &mut Frame, text: &str) {
+pub fn _debug_draw(frame: &mut Frame, text: &str) {
     frame.render_widget(Line::from(text).yellow(), Rect::new(0, 0, 30, 1));
 }

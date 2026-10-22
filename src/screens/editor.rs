@@ -30,7 +30,7 @@ impl Screen for Editor {
     /// Handles Input events specific to this screen.
     fn handle_crossterm_events(
         &mut self,
-        state: &mut crate::state::AppState,
+        _state: &mut crate::state::AppState,
         event: crossterm::event::Event,
     ) -> crate::input_results::InputResult {
         if is_escape_etc(&event) {
@@ -65,7 +65,7 @@ impl Editor {
         Ok(Box::new(Editor {}))
     }
 
-    fn draw_internal(&self, state: &AppState, frame: &mut Frame) {
+    fn draw_internal(&self, _state: &AppState, frame: &mut Frame) {
         frame.render_widget(Line::from("Editor Screen").yellow(), Rect::new(0, 0, 30, 1));
     }
 }
