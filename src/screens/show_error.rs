@@ -7,7 +7,7 @@ use ratatui::{
     text::Line,
     widgets::{Block, Paragraph, StatefulWidget, Wrap},
 };
-use tui_scrollview::{ScrollView, ScrollViewState};
+use tui_scrollview::{ScrollView, ScrollViewState, ScrollbarVisibility};
 
 use crate::{InputResult, Screen, state::AppState};
 
@@ -32,15 +32,13 @@ impl<'a> StatefulWidget for ScrollableErrorWidget<'a> {
 
         let content_paragraph = Paragraph::new(content).wrap(Wrap { trim: true });
         let content_size = Size::new(
-            area.width - 1,
-            content_paragraph
-                .line_count(area.width - 1)
-                .try_into()
-                .unwrap(),
+            area.width,
+            content_paragraph.line_count(area.width).try_into().unwrap(),
         );
-        let mut scroll_view = ScrollView::new(content_size);
+        let mut scroll_view = ScrollView::new(content_size)
+            .horizontal_scrollbar_visibility(ScrollbarVisibility::Never);
 
-        let content_position = Rect::new(0, 0, area.width, area.height);
+        let content_position = Rect::new(0, 0, content_size.width, content_size.height);
         scroll_view.render_widget(content_paragraph, content_position);
         scroll_view.render(area, buf, state);
     }
