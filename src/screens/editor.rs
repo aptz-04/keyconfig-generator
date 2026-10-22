@@ -7,9 +7,20 @@ use crate::{
     state::AppState,
 };
 
+use super::common_handling::common_event_handling;
+
+mod mode;
+mod state;
+
+// re-export for simpler use
+pub use mode::EditorMode;
+pub use state::EditorState;
+
+/// Screen responsible for manual editing of the matrix definitions, used keys and keymappings on those used keys.
 pub struct Editor {}
 
 impl Screen for Editor {
+    /// Construct a new boxed instance.
     fn new() -> Box<Self>
     where
         Self: Sized,
@@ -17,25 +28,23 @@ impl Screen for Editor {
         Box::new(Editor {})
     }
 
-    fn draw(&self, state: &AppState, terminal: &mut ratatui::DefaultTerminal) {
+    /// Handles the drawing of headers, footers and editor grid.
+    fn draw(&self, state: &mut AppState, terminal: &mut ratatui::DefaultTerminal) {
         let _ = terminal.draw(|frame| self.draw_internal(state, frame));
     }
 
+    /// Handles Input events specific to this screen.
     fn handle_crossterm_events(
         &mut self,
         state: &mut crate::state::AppState,
         event: crossterm::event::Event,
     ) -> crate::input_results::InputResult {
-        match event {
-            Event::Key(key) => match (key.code, key.modifiers) {
-                (KeyCode::Esc | KeyCode::Char('q'), _)
-                | (KeyCode::Char('c') | KeyCode::Char('C'), KeyModifiers::CONTROL) => {
-                    ReturnFromScreen
-                }
-                _ => NoAction,
-            },
-            _ => NoAction,
+        match common_event_handling(&event) {
+            NoAction => (),
+            result => return result,
         }
+
+        NoAction
     }
 }
 

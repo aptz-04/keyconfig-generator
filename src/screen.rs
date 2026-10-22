@@ -10,7 +10,7 @@ pub trait Screen {
     where
         Self: Sized;
     /// (re)-draw the screen on the given Terminal
-    fn draw(&self, state: &AppState, terminal: &mut DefaultTerminal);
+    fn draw(&self, state: &mut AppState, terminal: &mut DefaultTerminal);
     /// handle an input event
     fn handle_crossterm_events(&mut self, state: &mut AppState, event: Event) -> InputResult;
 }

@@ -38,12 +38,8 @@ async fn main() -> color_eyre::Result<()> {
 }
 
 pub struct App {
-    /// Is the application running?
-    is_running: bool,
     // Event stream.
     event_stream: EventStream,
-    screen_stack: ScreenStack,
-    current_screen: Option<Box<dyn Screen>>,
     state: AppState,
 }
 
@@ -52,27 +48,33 @@ impl App {
     pub fn new() -> Self {
         // setup screens, editor is the first one displayed
         App {
-            is_running: false,
             event_stream: EventStream::default(),
-            screen_stack: ScreenStack::new(),
-            current_screen: None,
             state: AppState::new(),
         }
     }
 
     /// Run the application's main loop.
     pub async fn run(mut self, mut terminal: DefaultTerminal) -> color_eyre::Result<()> {
-        let initial_screen = Start::new();
-        self.current_screen = Some(initial_screen);
+        let mut current_screen: Box<dyn Screen> = Start::new();
+        let mut screen_stack = ScreenStack::new();
 
-        while let Some(ref mut screen) = self.current_screen {
-            screen.draw(&self.state, &mut terminal);
+        loop {
+            current_screen.draw(&mut self.state, &mut terminal);
+
             if let Some(event) = self.event_stream.next().await {
-                match screen.handle_crossterm_events(&mut self.state, event.unwrap()) {
+                match current_screen.handle_crossterm_events(&mut self.state, event.unwrap()) {
                     InputResult::QuitApplication => break,
                     InputResult::ReturnFromScreen => {
                         // pop the next screen from stack, if there's None, quit the application
-                        self.current_screen = self.screen_stack.pop();
+                        if let Some(new_screen) = screen_stack.pop() {
+                            current_screen = new_screen
+                        } else {
+                            break;
+                        };
+                    }
+                    InputResult::GoToScreen(new_screen) => {
+                        screen_stack.push(current_screen);
+                        current_screen = new_screen;
                     }
                     _ => (),
                 };
